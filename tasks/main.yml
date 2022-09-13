@@ -1,0 +1,50 @@
+---
+# tasks file for ansible-powershell
+- name: Install deps
+  ansible.builtin.apt:
+    pkg:
+    - apt-transport-https
+    - lsb-release
+    - software-properties-common
+    - wget
+  when: ansible_os_family == "Debian"
+
+- set_fact:
+    release: "18.04"
+    when: 
+      - (ansible_facts['release'] == "19")
+      - ansible_os_family == "Debian"
+
+- set_fact:
+    release: "20.04"
+    when: 
+      - (ansible_facts['release'] == "20")
+      - ansible_os_family == "Debian"
+
+- set_fact:
+    release: "22.04"
+    when: 
+      - (ansible_facts['release'] == "21")
+      - ansible_os_family == "Debian"
+
+- name: Install repo package
+  ansible.builtin.apt:
+    deb: https://packages.microsoft.com/config/ubuntu/{{ release }}/packages-microsoft-prod.deb
+  when: ansible_os_family == "Debian"
+
+- name: Update cache
+  ansible.builtin.apt:
+    update_cache: yes
+  when: ansible_os_family == "Debian"
+
+- name: Add repository
+  ansible.builtin.yum_repository:
+    name: microsoft
+    description: Microsoft Repository
+    baseurl: https://packages.microsoft.com/config/rhel/{{ ansible_distribution_major_version }}/prod.repo
+  when: ansible_os_family == "RedHat"
+
+- name: Install powershell
+  ansible.builtin.package:
+    name: powershell
+    state: present
